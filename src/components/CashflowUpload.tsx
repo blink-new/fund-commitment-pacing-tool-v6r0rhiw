@@ -138,10 +138,14 @@ export default function CashflowUpload({ funds, onCashflowsUploaded, existingCas
           continue
         }
 
-        const yearlyCashflows: YearlyCashflow[] = yearColumns.map(col => ({
-          year: col.year,
-          netCashflowPercentage: parseFloat(values[col.index]) || 0
-        }))
+        const yearlyCashflows: YearlyCashflow[] = yearColumns.map(col => {
+          const value = values[col.index]
+          const parsedValue = parseFloat(value)
+          return {
+            year: col.year,
+            netCashflowPercentage: isNaN(parsedValue) ? 0 : parsedValue
+          }
+        })
 
         parsedData.push({
           fundId: matchingFund.id,
@@ -477,7 +481,8 @@ export default function CashflowUpload({ funds, onCashflowsUploaded, existingCas
                                 step="0.01"
                                 value={(percentage * 100).toFixed(2)}
                                 onChange={(e) => {
-                                  const newPercentage = parseFloat(e.target.value) / 100 || 0
+                                  const inputValue = parseFloat(e.target.value)
+                                  const newPercentage = isNaN(inputValue) ? 0 : inputValue / 100
                                   const updatedCashflows = uploadedCashflows.map(cf => {
                                     if (cf.fundId === fundData.fundId) {
                                       const updatedYearlyCashflows = cf.yearlyCashflows.map(yc => 

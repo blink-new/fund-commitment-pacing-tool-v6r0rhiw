@@ -68,12 +68,12 @@ export default function CashflowForm({ open, onOpenChange, onSubmit, funds, sele
       fundId: formData.fundId,
       year: formData.year,
       quarter: formData.quarter,
-      calls: parseFloat(formData.calls) || 0,
-      distributions: parseFloat(formData.distributions) || 0,
-      nav: parseFloat(formData.nav) || 0,
-      managementFees: parseFloat(formData.managementFees) || 0,
-      carriedInterest: parseFloat(formData.carriedInterest) || 0,
-      taxes: parseFloat(formData.taxes) || 0
+      calls: isNaN(parseFloat(formData.calls)) ? 0 : parseFloat(formData.calls),
+      distributions: isNaN(parseFloat(formData.distributions)) ? 0 : parseFloat(formData.distributions),
+      nav: isNaN(parseFloat(formData.nav)) ? 0 : parseFloat(formData.nav),
+      managementFees: isNaN(parseFloat(formData.managementFees)) ? 0 : parseFloat(formData.managementFees),
+      carriedInterest: isNaN(parseFloat(formData.carriedInterest)) ? 0 : parseFloat(formData.carriedInterest),
+      taxes: isNaN(parseFloat(formData.taxes)) ? 0 : parseFloat(formData.taxes)
     })
 
     // Reset form
