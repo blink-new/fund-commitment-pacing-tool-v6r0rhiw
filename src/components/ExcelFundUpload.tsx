@@ -64,7 +64,7 @@ export default function ExcelFundUpload({ onBulkUpload }: ExcelFundUploadProps) 
     reader.onload = (e) => {
       try {
         const text = e.target?.result as string
-        const lines = text.split('\\n').filter(line => line.trim())
+        const lines = text.split('\n').filter(line => line.trim())
         
         if (lines.length < 2) {
           toast({
@@ -224,7 +224,7 @@ export default function ExcelFundUpload({ onBulkUpload }: ExcelFundUploadProps) 
       ...instructionRows,
       headers.join(','), 
       ...sampleData
-    ].join('\\n')
+    ].join('\n')
     
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
@@ -233,6 +233,11 @@ export default function ExcelFundUpload({ onBulkUpload }: ExcelFundUploadProps) 
     a.download = `fund_upload_template_${new Date().toISOString().split('T')[0]}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
+    
+    toast({
+      title: "Template Downloaded",
+      description: "Fund upload template has been downloaded successfully."
+    })
   }
 
   const downloadCurrentData = () => {
@@ -250,7 +255,7 @@ export default function ExcelFundUpload({ onBulkUpload }: ExcelFundUploadProps) 
     const dataRows = uploadedData.map(fund => {
       const yearValues = Array.from({ length: 12 }, (_, i) => {
         const value = fund[i + 1] || 0
-        return (value * 100).toFixed(2) // Convert to percentage
+        return value.toString() // Keep as decimal, not percentage
       })
       
       return [
@@ -263,7 +268,7 @@ export default function ExcelFundUpload({ onBulkUpload }: ExcelFundUploadProps) 
       ].join(',')
     })
     
-    const csvContent = [headers.join(','), ...dataRows].join('\\n')
+    const csvContent = [headers.join(','), ...dataRows].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -271,6 +276,11 @@ export default function ExcelFundUpload({ onBulkUpload }: ExcelFundUploadProps) 
     a.download = `fund_data_export_${new Date().toISOString().split('T')[0]}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
+    
+    toast({
+      title: "Data Exported",
+      description: "Current fund data has been exported successfully."
+    })
   }
 
   return (

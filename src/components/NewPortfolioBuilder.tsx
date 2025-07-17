@@ -319,16 +319,17 @@ export default function NewPortfolioBuilder({
         <CardHeader>
           <CardTitle>Select Portfolio</CardTitle>
           <CardDescription>
-            Choose a portfolio to analyze and manage positions
+            Choose a portfolio to analyze and manage positions, or work with individual funds
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4">
             <Select value={selectedPortfolio} onValueChange={setSelectedPortfolio}>
               <SelectTrigger className="w-64">
-                <SelectValue placeholder="Select a portfolio" />
+                <SelectValue placeholder="Select a portfolio or work standalone" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="standalone">Standalone Fund Management</SelectItem>
                 {portfolios.map(portfolio => (
                   <SelectItem key={portfolio.id} value={portfolio.id}>
                     {portfolio.name} (${formatCurrency(portfolio.totalSize)})
@@ -350,11 +351,22 @@ export default function NewPortfolioBuilder({
                 </div>
               </div>
             )}
+            
+            {selectedPortfolio === 'standalone' && (
+              <div className="flex items-center gap-4">
+                <Badge variant="outline">
+                  Standalone Mode
+                </Badge>
+                <div className="text-sm text-muted-foreground">
+                  Work with individual funds without portfolio constraints
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {selectedPortfolio && (
+      {selectedPortfolio && selectedPortfolio !== 'standalone' && (
         <Tabs defaultValue="analysis" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="analysis" className="flex items-center gap-2">
@@ -685,6 +697,129 @@ export default function NewPortfolioBuilder({
             </Card>
           </TabsContent>
         </Tabs>
+      )}
+
+      {/* Standalone Fund Management */}
+      {selectedPortfolio === 'standalone' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Standalone Fund Management
+            </CardTitle>
+            <CardDescription>
+              Browse and analyze individual funds from the general database without portfolio constraints
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Fund Browser */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {generalFunds.slice(0, 9).map(fund => {
+                  const cashflowCount = generalFundCashflows.filter(cf => cf.fundId === fund.id).length
+                  return (
+                    <Card key={fund.id} className="hover:shadow-md transition-shadow">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="text-base">{fund.name}</CardTitle>
+                            <CardDescription>{fund.vintage} • {fund.fundType}</CardDescription>
+                          </div>
+                          <Badge variant="outline">{fund.geography}</Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Strategy:</span>
+                            <span>{fund.strategy}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Lifespan:</span>
+                            <span>{fund.expectedLifespan} years</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Data Points:</span>
+                            <span>{cashflowCount} years</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Mgmt Fee:</span>
+                            <span>{fund.managementFeeRate}%</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+
+              {/* Summary Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Funds</CardTitle>
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{generalFunds.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Available in database
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Fund Types</CardTitle>
+                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {new Set(generalFunds.map(f => f.fundType)).size}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Different asset classes
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Geographies</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {new Set(generalFunds.map(f => f.geography)).size}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Investment regions
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Data Coverage</CardTitle>
+                    <Calculator className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {generalFundCashflows.length}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Cashflow data points
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="text-center text-muted-foreground">
+                <p>Create a portfolio above to start building fund positions and analyze cashflow waterfalls</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

@@ -226,6 +226,54 @@ export default function DatabaseManagement() {
     setFundRules(fundRules.filter(rule => rule.id !== id))
   }
 
+  // Download template function
+  const downloadTemplate = () => {
+    const headers = [
+      'Fund', 'Vintage', 'Type', 'Subtype', 'Geography',
+      'Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6', 
+      'Year 7', 'Year 8', 'Year 9', 'Year 10', 'Year 11', 'Year 12'
+    ]
+    
+    const sampleData = [
+      'QGP II,2023,FOF,VC,India,-29.1,-15.52,-41.09,-2.09,25.36,10.56,36.94,51.43,47.00,54.83,4.16,0',
+      'Alpinvest,2024,Secondary,Lower MM,EU,-15.52,-37.39,-3.0,-2.09,25.36,41.86,41.71,25.14,14.69,14.02,4.16,0',
+      'Quadrum,2024,PE,Tech,EU,-38.53,-48.21,-20.0,21.74,25.36,41.86,41.71,25.14,14.69,14.02,4.16,0'
+    ]
+    
+    const instructionRows = [
+      '# INSTRUCTIONS:',
+      '# - Fund: Fund name',
+      '# - Vintage: Fund vintage year',
+      '# - Type: FOF, PE, VC, RE, Infrastructure, Credit, Hedge Fund, Secondary',
+      '# - Subtype: Strategy within fund type',
+      '# - Geography: Investment geography',
+      '# - Year 1-12: Net cashflow as percentage (negative = calls, positive = distributions)',
+      '# - Example: -25.5 means 25.5% of commitment called',
+      '# - Example: 15.2 means 15.2% of commitment distributed',
+      '#',
+      '# DELETE THESE INSTRUCTION ROWS BEFORE UPLOADING'
+    ]
+    
+    const csvContent = [
+      ...instructionRows,
+      headers.join(','), 
+      ...sampleData
+    ].join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `fund_upload_template_${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    
+    toast({
+      title: "Template Downloaded",
+      description: "Fund upload template has been downloaded successfully."
+    })
+  }
+
   // Calculate database metrics
   const getDatabaseMetrics = () => {
     const totalGeneralFunds = generalFunds.length
@@ -257,6 +305,24 @@ export default function DatabaseManagement() {
 
   return (
     <div className="container mx-auto px-6 py-6">
+      {/* Header Actions */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Database Management</CardTitle>
+              <CardDescription>
+                Manage fund database, upload data, and download templates
+              </CardDescription>
+            </div>
+            <Button onClick={downloadTemplate} variant="outline">
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Download Template
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>

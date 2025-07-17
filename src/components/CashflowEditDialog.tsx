@@ -1,25 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Cashflow, Fund } from '../types'
 
-interface CashflowFormProps {
+interface CashflowEditDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (cashflowData: Omit<Cashflow, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => void
+  cashflow: Cashflow | null
   funds: Fund[]
-  selectedFundId?: string
+  onSave: (cashflowData: Omit<Cashflow, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => void
+  onDelete?: (cashflowId: string) => void
 }
 
-export default function CashflowForm({ open, onOpenChange, onSubmit, funds, selectedFundId }: CashflowFormProps) {
+export default function CashflowEditDialog({ 
+  open, 
+  onOpenChange, 
+  cashflow, 
+  funds, 
+  onSave, 
+  onDelete 
+}: CashflowEditDialogProps) {
   const currentYear = new Date().getFullYear()
   
   const [formData, setFormData] = useState({
-    fundId: selectedFundId || '',
+    fundId: '',
     year: currentYear,
     quarter: 1,
     calls: '',
@@ -31,6 +39,36 @@ export default function CashflowForm({ open, onOpenChange, onSubmit, funds, sele
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Update form when cashflow changes
+  useEffect(() => {
+    if (cashflow) {
+      setFormData({
+        fundId: cashflow.fundId,
+        year: cashflow.year,
+        quarter: cashflow.quarter,
+        calls: cashflow.calls.toString(),
+        distributions: cashflow.distributions.toString(),
+        nav: cashflow.nav.toString(),
+        managementFees: (cashflow.managementFees || 0).toString(),
+        carriedInterest: (cashflow.carriedInterest || 0).toString(),
+        taxes: (cashflow.taxes || 0).toString()
+      })
+    } else {
+      setFormData({
+        fundId: '',
+        year: currentYear,
+        quarter: 1,
+        calls: '',
+        distributions: '',
+        nav: '',
+        managementFees: '',
+        carriedInterest: '',
+        taxes: ''
+      })
+    }
+    setErrors({})
+  }, [cashflow, currentYear])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -64,7 +102,7 @@ export default function CashflowForm({ open, onOpenChange, onSubmit, funds, sele
       return
     }
 
-    onSubmit({
+    onSave({
       fundId: formData.fundId,
       year: formData.year,
       quarter: formData.quarter,
@@ -76,19 +114,6 @@ export default function CashflowForm({ open, onOpenChange, onSubmit, funds, sele
       taxes: parseFloat(formData.taxes) || 0
     })
 
-    // Reset form
-    setFormData({
-      fundId: selectedFundId || '',
-      year: currentYear,
-      quarter: 1,
-      calls: '',
-      distributions: '',
-      nav: '',
-      managementFees: '',
-      carriedInterest: '',
-      taxes: ''
-    })
-    setErrors({})
     onOpenChange(false)
   }
 
@@ -100,15 +125,24 @@ export default function CashflowForm({ open, onOpenChange, onSubmit, funds, sele
     }
   }
 
+  const handleDelete = () => {
+    if (cashflow && onDelete) {
+      onDelete(cashflow.id)
+      onOpenChange(false)
+    }
+  }
+
   const selectedFund = funds.find(f => f.id === formData.fundId)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Cashflow Entry</DialogTitle>
+          <DialogTitle>
+            {cashflow ? 'Edit Cashflow Entry' : 'Add Cashflow Entry'}
+          </DialogTitle>
           <DialogDescription>
-            Record cashflow data for a specific fund and period
+            {cashflow ? 'Update cashflow data for this fund and period' : 'Record cashflow data for a specific fund and period'}
           </DialogDescription>
         </DialogHeader>
 
@@ -197,7 +231,7 @@ export default function CashflowForm({ open, onOpenChange, onSubmit, funds, sele
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {formData.calls && !isNaN(parseFloat(formData.calls)) 
-                    ? `${(Math.abs(parseFloat(formData.calls)) / 1000000).toFixed(1)}M`
+                    ? `$${(Math.abs(parseFloat(formData.calls)) / 1000000).toFixed(1)}M`
                     : 'Amount called from LPs (can be negative)'
                   }
                 </p>
@@ -215,7 +249,7 @@ export default function CashflowForm({ open, onOpenChange, onSubmit, funds, sele
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {formData.distributions && !isNaN(parseFloat(formData.distributions)) 
-                    ? `${(Math.abs(parseFloat(formData.distributions)) / 1000000).toFixed(1)}M`
+                    ? `$${(Math.abs(parseFloat(formData.distributions)) / 1000000).toFixed(1)}M`
                     : 'Amount distributed to LPs (can be negative)'
                   }
                 </p>
@@ -233,7 +267,7 @@ export default function CashflowForm({ open, onOpenChange, onSubmit, funds, sele
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {formData.nav && !isNaN(parseFloat(formData.nav)) 
-                    ? `${(Math.abs(parseFloat(formData.nav)) / 1000000).toFixed(1)}M`
+                    ? `$${(Math.abs(parseFloat(formData.nav)) / 1000000).toFixed(1)}M`
                     : 'Current fund NAV'
                   }
                 </p>
@@ -288,13 +322,22 @@ export default function CashflowForm({ open, onOpenChange, onSubmit, funds, sele
             </CardContent>
           </Card>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">
-              Add Cashflow
-            </Button>
+          <DialogFooter className="flex justify-between">
+            <div>
+              {cashflow && onDelete && (
+                <Button type="button" variant="destructive" onClick={handleDelete}>
+                  Delete Cashflow
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                {cashflow ? 'Update Cashflow' : 'Add Cashflow'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
